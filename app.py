@@ -1,266 +1,214 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-
-import tensorflow as tf
-
-# Configure GPU memory growth
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-        print("GPU is available and configured")
-        print(f"Found GPU: {gpus[0].device_type}")
-    except RuntimeError as e:
-        print(f"GPU configuration error: {e}")
-
-print("Tensorflow devices:", tf.config.list_physical_devices())
-
-import pandas as pd
+import json
 import numpy as np
+import pandas as pd
 from transformers import pipeline
-from tensorflow.keras.layers import TextVectorization, Concatenate, Input, BatchNormalization
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import LSTM, Dropout, Bidirectional, Dense, Embedding
 import gradio as gr
 import re
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.model_selection import train_test_split
+import joblib
 
 # Constants
-MAX_FEATURES = 50000
-SEQUENCE_LENGTH = 256
-BATCH_SIZE = 32  # Increased for GPU
-EMBEDDING_DIM = 64  # Increased for better representation
+TEST_SAMPLE_SIZE = 500
 
-# Load sentiment analysis pipeline
-print("Loading RoBERTa model...")
-sentiment_analyzer = pipeline(
-    "sentiment-analysis",
-    model="cardiffnlp/twitter-roberta-base-sentiment",
-    device=0 if tf.test.gpu_device_name() else -1  # Use GPU if available
-)
+class ToxicityAnalyzer:
+    def __init__(self, model_dir='model_artifacts'):
+        print("Initializing ToxicityAnalyzer...")
+        self.model_dir = model_dir
+        os.makedirs(model_dir, exist_ok=True)
+        
+        self.model_path = os.path.join(model_dir, 'logistic_model.joblib')
+        self.vectorizer_path = os.path.join(model_dir, 'tfidf_vectorizer.joblib')
+        self.sentiment_cache_path = os.path.join(model_dir, 'sentiment_cache.json')
+        
+        print("Loading sentiment analyzer...")
+        self.sentiment_analyzer = pipeline(
+            "sentiment-analysis",
+            model="cardiffnlp/twitter-roberta-base-sentiment"
+        )
+        
+        # Initialize components
+        self.sentiment_cache = self._load_sentiment_cache()
+        self.vectorizer = None
+        self.model = None
+        
+        # Load or train the model
+        self._initialize_model()
+    
+    def _load_sentiment_cache(self):
+        if os.path.exists(self.sentiment_cache_path):
+            print("Loading sentiment cache...")
+            with open(self.sentiment_cache_path, 'r') as f:
+                return json.load(f)
+        return {}
 
-def get_roberta_sentiment(text):
-    """Get sentiment features using RoBERTa"""
-    try:
-        result = sentiment_analyzer(text, truncation=True, max_length=128)
+    def _save_sentiment_cache(self):
+        with open(self.sentiment_cache_path, 'w') as f:
+            json.dump(self.sentiment_cache, f)
+
+    def clean_text(self, text):
+        text = str(text).lower()
+        return re.sub(r'[^a-zA-Z\s]', '', text)
+
+    def get_sentiment(self, text):
+        if text in self.sentiment_cache:
+            return self.sentiment_cache[text]
+        
+        result = self.sentiment_analyzer(text, truncation=True, max_length=128)
         sentiment_map = {
             'LABEL_0': [1, 0, 0],  # Negative
             'LABEL_1': [0, 1, 0],  # Neutral
             'LABEL_2': [0, 0, 1]   # Positive
         }
-        return sentiment_map[result[0]['label']]
-    except Exception as e:
-        print(f"Error in sentiment analysis: {e}")
-        return [0.33, 0.33, 0.34]
-
-def clean_text(text):
-    """Clean and preprocess text"""
-    text = str(text).lower()
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
-    return text
-
-def load_data(data_path='data/train.csv'):
-    print("Loading data...")
-    df = pd.read_csv(data_path)
-    df.drop('id', inplace=True, axis=1)
-    return df
-
-def prepare_dataset(df):
-    print("Preparing datasets...")
-    X = df.comment_text
-    y = df[df.columns[2:]].values
-    
-    X_clean = X.apply(clean_text)
-    
-    print("Analyzing sentiments...")
-    sentiment_features = []
-    for i in range(0, len(X_clean), BATCH_SIZE):
-        batch = X_clean[i:i + BATCH_SIZE]
-        batch_sentiments = sentiment_analyzer(batch.tolist(), truncation=True, max_length=128, batch_size=BATCH_SIZE)
-        numerical_sentiments = []
-        for sent in batch_sentiments:
-            sentiment_map = {
-                'LABEL_0': [1, 0, 0],
-                'LABEL_1': [0, 1, 0],
-                'LABEL_2': [0, 0, 1]
-            }
-            numerical_sentiments.append(sentiment_map[sent['label']])
-        sentiment_features.extend(numerical_sentiments)
-        if i % 1000 == 0:
-            print(f"Processed {i}/{len(X_clean)} texts...")
-    
-    sentiment_features = np.array(sentiment_features)
-    
-    vectorizer = TextVectorization(
-        max_tokens=MAX_FEATURES,
-        output_sequence_length=SEQUENCE_LENGTH,
-        output_mode='int'
-    )
-    
-    text_ds = tf.data.Dataset.from_tensor_slices(X_clean.values).batch(BATCH_SIZE)
-    vectorizer.adapt(text_ds)
-    
-    def prepare_features(texts, sentiments, labels):
-        return {
-            'text_input': vectorizer(texts), 
-            'sentiment_input': sentiments
-        }, labels
-    
-    dataset = tf.data.Dataset.from_tensor_slices((X_clean.values, sentiment_features, y))
-    dataset = dataset.batch(BATCH_SIZE)
-    dataset = dataset.map(prepare_features)
-    dataset = dataset.prefetch(tf.data.AUTOTUNE)
-    
-    train_size = int(len(df) * 0.7)
-    val_size = int(len(df) * 0.2)
-    
-    train = dataset.take(train_size // BATCH_SIZE)
-    val = dataset.skip(train_size // BATCH_SIZE).take(val_size // BATCH_SIZE)
-    test = dataset.skip((train_size + val_size) // BATCH_SIZE)
-    
-    return train, val, test, vectorizer
-
-def create_model():
-    print("Creating enhanced model...")
-    
-    # Text input branch
-    text_input = Input(shape=(SEQUENCE_LENGTH,), name='text_input')
-    embedding = Embedding(MAX_FEATURES + 1, EMBEDDING_DIM)(text_input)
-    
-    # Multiple LSTM layers
-    lstm1 = Bidirectional(LSTM(64, return_sequences=True))(embedding)
-    lstm1 = BatchNormalization()(lstm1)
-    
-    lstm2 = Bidirectional(LSTM(32))(lstm1)
-    lstm2 = BatchNormalization()(lstm2)
-    
-    # Sentiment input branch
-    sentiment_input = Input(shape=(3,), name='sentiment_input')
-    sentiment_dense = Dense(32, activation='relu')(sentiment_input)
-    sentiment_dense = BatchNormalization()(sentiment_dense)
-    
-    # Combine features
-    combined = Concatenate()([lstm2, sentiment_dense])
-    
-    # Dense layers
-    dense = Dense(256, activation='relu')(combined)
-    dense = BatchNormalization()(dense)
-    dense = Dropout(0.4)(dense)
-    
-    dense = Dense(128, activation='relu')(dense)
-    dense = BatchNormalization()(dense)
-    dense = Dropout(0.3)(dense)
-    
-    dense = Dense(64, activation='relu')(dense)
-    dense = BatchNormalization()(dense)
-    dense = Dropout(0.2)(dense)
-    
-    outputs = Dense(5, activation='sigmoid')(dense)
-    
-    model = Model(inputs=[text_input, sentiment_input], outputs=outputs)
-    
-    model.compile(
-        loss='binary_crossentropy',
-        optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-        metrics=['accuracy']
-    )
-    return model
-
-def main():
-    # Print GPU information
-    print("\nGPU Information:")
-    print("GPU Available:", bool(tf.config.list_physical_devices('GPU')))
-    print("GPU Device:", tf.test.gpu_device_name())
-
-    df = load_data()
-    model_path = 'toxicity_model'
-
-    if os.path.exists(model_path):
-        print("Loading saved model...")
-        model = tf.keras.models.load_model(model_path)
-        _, _, _, vectorizer = prepare_dataset(df)
-        print("Vectorizer initialized...")
-    else:
-        print("Training new model...")
-        train, val, test, vectorizer = prepare_dataset(df)
-        model = create_model()
+        sentiment = sentiment_map[result[0]['label']]
         
-        history = model.fit(
-            train,
-            validation_data=val,
-            epochs=25,
-            callbacks=[
-                tf.keras.callbacks.EarlyStopping(
-                    monitor='val_loss',
-                    patience=4,
-                    restore_best_weights=True
-                ),
-                tf.keras.callbacks.ReduceLROnPlateau(
-                    monitor='val_loss',
-                    factor=0.5,
-                    patience=2,
-                    min_lr=0.0001
-                ),
-                tf.keras.callbacks.ModelCheckpoint(
-                    'best_model.h5',
-                    monitor='val_loss',
-                    save_best_only=True
-                )
-            ]
-        )
+        self.sentiment_cache[text] = sentiment
+        self._save_sentiment_cache()
         
-        print("Saving model...")
-        model.save(model_path)
+        return sentiment
 
-    def score_comment(comment):
-        cleaned_text = clean_text(comment)
-        sentiment_features = get_roberta_sentiment(cleaned_text)
-        vectorized_text = vectorizer([cleaned_text])
+    def prepare_data(self, df, training=False):
+        print(f"Preparing dataset with {len(df)} samples...")
         
-        results = model.predict({
-            'text_input': vectorized_text,
-            'sentiment_input': np.array([sentiment_features])
-        })
+        X = df.comment_text.apply(self.clean_text)
+        print("Texts cleaned...")
+        
+        if training:
+            print("Creating TF-IDF vectorizer...")
+            self.vectorizer = TfidfVectorizer(
+                max_features=10000,  # Reduced for test dataset
+                ngram_range=(1, 2),
+                strip_accents='unicode',
+                min_df=2
+            )
+            X_tfidf = self.vectorizer.fit_transform(X)
+            print("TF-IDF features created...")
+            
+            print("Analyzing sentiments...")
+            sentiment_features = []
+            for i, text in enumerate(X):
+                sentiment = self.get_sentiment(text)
+                sentiment_features.append(sentiment)
+                if (i + 1) % 50 == 0:  # Progress every 50 samples
+                    print(f"Processed {i + 1}/{len(X)} texts...")
+            
+            sentiment_features = np.array(sentiment_features)
+            print("Sentiment analysis complete.")
+            
+            # Combine TF-IDF and sentiment features
+            X_combined = np.hstack([
+                X_tfidf.toarray(),
+                sentiment_features
+            ])
+            
+            # Save vectorizer
+            print("Saving vectorizer...")
+            joblib.dump(self.vectorizer, self.vectorizer_path)
+            
+            return X_combined
+        else:
+            X_tfidf = self.vectorizer.transform(X)
+            sentiment_features = np.array([self.get_sentiment(text) for text in X])
+            return np.hstack([X_tfidf.toarray(), sentiment_features])
+
+    def _initialize_model(self):
+        print("Loading data...")
+        df = pd.read_csv('data/train.csv').head(TEST_SAMPLE_SIZE)  # Load only 500 samples
+        df = df.drop('id', axis=1)  # Drop ID column if it exists
+        
+        if os.path.exists(self.model_path) and os.path.exists(self.vectorizer_path):
+            print("Loading existing model and vectorizer...")
+            self.vectorizer = joblib.load(self.vectorizer_path)
+            self.model = joblib.load(self.model_path)
+        else:
+            print("Training new model...")
+            # Prepare features
+            y = df[['toxic', 'severe_toxic', 'obscene', 'threat', 'insult']].values
+            X_combined = self.prepare_data(df, training=True)
+            
+            # Train test split
+            print("Splitting dataset...")
+            X_train, X_test, y_train, y_test = train_test_split(
+                X_combined, y, test_size=0.2, random_state=42
+            )
+            
+            # Create and train model
+            print("Training logistic regression model...")
+            base_classifier = LogisticRegression(
+                C=1.0,
+                max_iter=100,
+                class_weight='balanced',
+                n_jobs=-1,
+                verbose=1
+            )
+            
+            self.model = MultiOutputClassifier(base_classifier)
+            self.model.fit(X_train, y_train)
+            
+            # Evaluate
+            print("Evaluating model...")
+            score = self.model.score(X_test, y_test)
+            print(f"Model accuracy: {score:.4f}")
+            
+            # Save model
+            print("Saving model...")
+            joblib.dump(self.model, self.model_path)
+            print("Model saved successfully.")
+
+    def score_comment(self, comment):
+        cleaned_text = self.clean_text(comment)
+        
+        # Get features
+        X_tfidf = self.vectorizer.transform([cleaned_text])
+        sentiment_features = np.array([self.get_sentiment(cleaned_text)])
+        X_combined = np.hstack([X_tfidf.toarray(), sentiment_features])
+        
+        # Get predictions
+        predictions = [clf.predict_proba(X_combined) for clf in self.model.estimators_]
         
         # Format sentiment output
         sentiment_labels = ['Negative', 'Neutral', 'Positive']
-        sentiment_dict = {label: score for label, score in zip(sentiment_labels, sentiment_features)}
-        dominant_sentiment = max(sentiment_dict.items(), key=lambda x: x[1])
-        sentiment_output = f"{dominant_sentiment[0]}: {dominant_sentiment[1]*100:.1f}%"
+        dominant_sentiment = sentiment_labels[np.argmax(sentiment_features[0])]
         
-        # Only show toxicity labels for negative sentiment
-        toxicity_labels = {}
-        if sentiment_features[0] > 0.5:  # If negative sentiment
-            for label, value in zip(df.columns[2:], results[0]):
-                if value > 0.2:  # Only include if confidence exceeds threshold
-                    label_name = label.replace('_', ' ').title()
-                    confidence = value * sentiment_features[0] * 100  # Weight by negative sentiment
-                    toxicity_labels[label_name] = confidence
+        # Get toxicity labels
+        label_names = ['Toxic', 'Severe Toxic', 'Obscene', 'Threat', 'Insult']
+        detected_labels = []
         
-        return sentiment_output, toxicity_labels
+        # Check each classifier's probability
+        threshold = 0.5
+        for label_name, pred_proba in zip(label_names, predictions):
+            if pred_proba[0][1] > threshold:  # Probability of positive class > threshold
+                detected_labels.append(label_name)
+        
+        return dominant_sentiment, "\n".join(detected_labels) if detected_labels else "No toxic labels detected"
 
+def create_interface():
+    analyzer = ToxicityAnalyzer()
+    
     interface = gr.Interface(
-        fn=score_comment,
+        fn=analyzer.score_comment,
         inputs=gr.Textbox(
             lines=3, 
             placeholder='Type your text here...',
             label="Input Text"
         ),
         outputs=[
-            gr.Textbox(label="Sentiment Score", lines=1),
-            gr.Label(label="Toxicity Tags", show_label=False, num_top_classes=3)
+            gr.Textbox(label="Sentiment", lines=1),
+            gr.Textbox(label="Detected Labels", lines=5)
         ],
-        title="Toxicity & Sentiment Analyzer",
-        description="Analysis of text for toxicity and sentiment",
+        title="Toxicity & Sentiment Analyzer (Test Version - 500 Samples)",
+        description="Analysis of text for toxicity and sentiment (Trained on 500 samples)",
         theme=gr.themes.Base(primary_hue="blue", neutral_hue="slate"),
         css="""
             .gradio-container {background-color: #1f1f1f}
-            .label-confidence {display: none}
         """
     )
-    interface.launch()
+    return interface
 
 if __name__ == "__main__":
-    main()
+    print("Starting Toxicity Analyzer...")
+    interface = create_interface()
+    interface.launch()
