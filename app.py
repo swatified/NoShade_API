@@ -168,12 +168,15 @@ class ToxicityAnalyzer:
         dominant_sentiment = sentiment_labels[np.argmax(sentiment_features[0])]
         
         # Get detected labels
-        detected_labels = []
-        for label, pred in zip(self.label_columns, predictions):
-            if pred == 1:
-                detected_labels.append(label.replace('_', ' ').title())
-        
-        return dominant_sentiment, "\n".join(detected_labels) if detected_labels else "No toxic labels detected"
+        if dominant_sentiment == 'Negative':
+            predictions = [clf.predict(X_combined)[0] for clf in self.model.estimators_]
+            detected_labels = []
+            for label, pred in zip(self.label_columns, predictions):
+                if pred == 1:
+                    detected_labels.append(label.replace('_', ' ').title())
+            return dominant_sentiment, "\n".join(detected_labels) if detected_labels else "No toxic labels detected"
+        else:
+            return dominant_sentiment, "No toxic labels detected"
 
 def create_interface():
     analyzer = ToxicityAnalyzer()
