@@ -56,24 +56,24 @@ When you start the application, it loads:
 # Usage Examples ~
 
 ## 1. **Neutral Text**
-![Neutral Example](https://github.com/user-attachments/assets/851f49e3-3b13-42d5-ad8d-31fb581d3cf2)
+![Neutral Example](https://github.com/user-attachments/assets/a40c515b-8d64-4751-8c64-d2f309c01812)
 Simple greeting "Hey" is classified as neutral sentiment with no toxic labels.
 <br/><br/>
 
 ## 2. **Positive Text**
-![Positive Example](https://github.com/user-attachments/assets/5a2259da-870a-4e28-a732-9d3638e060e5)
+![Positive Example](https://github.com/user-attachments/assets/c9b00506-f195-4062-82c3-cb9584345441)
 "I have never seen something so funny" is classified as positive sentiment with no toxic labels.
 <br/><br/>
 
 ## 3. **Negative Text with Toxicity**
-![Negative Example 1](https://github.com/user-attachments/assets/103031d0-b483-4593-9bd2-a34c62bfc7bc)
+![Negative Example 1](https://github.com/user-attachments/assets/f62daeb1-81fa-432d-994b-9c48201661d3)
 "He is so stupid" triggers:
 - Negative sentiment
 - Multiple toxicity labels: Toxic, Obscene, Insult, Identity Hate
 <br/>
 
 ## 4. **Another Negative Example**
-![Negative Example 2](https://github.com/user-attachments/assets/1e0b3a59-73a8-45c3-9cdf-41a92bb3dfad)
+![Negative Example 2](https://github.com/user-attachments/assets/85ab63a9-da7b-47be-a347-6d0de3ce7a89)
 "Her mom cant cook" triggers:
 - Negative sentiment
 - Multiple toxicity labels: Toxic, Obscene, Insult
