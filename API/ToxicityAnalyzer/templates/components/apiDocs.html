@@ -1,0 +1,48 @@
+<section id="api-docs" class="min-h-screen bg-gradient-to-b from-white to-neutral-50 text-neutral-900 px-4 py-16 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-4xl font-bold mb-8 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-800 bg-clip-text text-transparent">API Documentation</h2>
+        
+        <!-- Introduction Card -->
+        <div class="bg-white border border-neutral-200 rounded-lg p-6 mb-8 shadow-sm">
+            <h3 class="text-2xl font-semibold mb-4 text-neutral-900">NoShad API Overview</h3>
+            <p class="mb-4 text-neutral-600">Monitor and analyze product comments across your website with our powerful API endpoints.</p>
+            <div class="flex flex-wrap gap-4">
+                <div class="px-4 py-2 bg-neutral-50 rounded-md border border-neutral-200">
+                    <span class="text-sm font-medium text-neutral-700">Base URL:</span>
+                    <code class="ml-2 text-emerald-600">https://api.noshad.com/v1</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="bg-white border border-neutral-200 rounded-lg p-6 mb-8 shadow-sm">
+            <h3 class="text-2xl font-semibold mb-4 text-neutral-900">Authentication</h3>
+            <p class="mb-4 text-neutral-600">All API requests require an API key to be included in the header.</p>
+            <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                <code class="text-sm text-emerald-600">
+                    Authorization: Bearer YOUR_API_KEY
+                </code>
+            </div>
+        </div>
+
+        <!-- Endpoints Section -->
+        <div class="space-y-8">
+            <!-- Get Comments Endpoint -->
+            <div class="bg-white border border-neutral-200 rounded-lg p-6 shadow-sm">
+                <h4 class="text-xl font-semibold mb-4 text-neutral-900">GET /comments</h4>
+                <p class="mb-4 text-neutral-600">Retrieve comments for a specific product.</p>
+                
+                <div class="mb-4">
+                    <h5 class="text-lg font-medium mb-2 text-neutral-900">Parameters</h5>
+                    <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                        <ul class="space-y-2">
+                            <li><code class="text-emerald-600">product_id</code> <span class="text-neutral-600">(required) - Unique identifier of the product</span></li>
+                            <li><code class="text-emerald-600">page</code> <span class="text-neutral-600">(optional) - Page number for pagination</span></li>
+                            <li><code class="text-emerald-600">limit</code> <span class="text-neutral-600">(optional) - Number of comments per page</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

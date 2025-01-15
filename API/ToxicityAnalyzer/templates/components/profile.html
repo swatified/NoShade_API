@@ -1,0 +1,114 @@
+<section id="account" class="min-h-screen bg-gradient-to-b from-white to-neutral-50 text-neutral-900 px-4 py-16 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white border border-neutral-200 rounded-lg p-6 shadow-sm">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <div class="w-12 h-12 bg-neutral-100 rounded-full overflow-hidden">
+                            <img src="https://avatar.iran.liara.run/public" alt="Profile" class="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-neutral-900">John Doe</h3>
+                            <p class="text-sm text-neutral-600">Premium Plan</p>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Navigation -->
+                    <nav class="space-y-2">
+                        <a href="#profile" class="flex items-center space-x-3 p-3 rounded-lg bg-neutral-900 text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            <span>Profile</span>
+                        </a>
+                        <a href="#api-keys" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-neutral-900 hover:text-white text-neutral-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
+                            <span>API Keys</span>
+                        </a>
+                        <a href="#settings" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-neutral-900 hover:text-white text-neutral-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span>Settings</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3 space-y-8">
+                <!-- Profile Section -->
+                <div class="bg-white border border-neutral-200 rounded-lg p-6 shadow-sm">
+                    <h2 class="text-2xl font-bold mb-6 text-neutral-900">Profile Information</h2>
+                    <form class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-neutral-700 mb-2">First Name</label>
+                                <input type="text" value="John" class="w-full bg-white border border-neutral-300 rounded-lg px-4 py-2 text-neutral-900 focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-neutral-700 mb-2">Last Name</label>
+                                <input type="text" value="Doe" class="w-full bg-white border border-neutral-300 rounded-lg px-4 py-2 text-neutral-900 focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-2">Email Address</label>
+                            <input type="email" value="john@example.com" class="w-full bg-white border border-neutral-300 rounded-lg px-4 py-2 text-neutral-900 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-2">Company</label>
+                            <input type="text" value="Acme Inc." class="w-full bg-white border border-neutral-300 rounded-lg px-4 py-2 text-neutral-900 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <button type="submit" class="px-8 py-3 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 transition-all transform hover:scale-105">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+
+                <!-- API Keys Section -->
+                <div class="bg-white border border-neutral-200 rounded-lg p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-neutral-900">API Keys</h2>
+                        <button class="px-8 py-3 rounded-full bg-neutral-900 text-white hover:bg-neutral-800 transition-all transform hover:scale-105">
+                            Generate New Key
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
+                            <div>
+                                <p class="text-neutral-900 font-medium">Production Key</p>
+                                <p class="text-neutral-600 text-sm">Created on Jan 15, 2024</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <code class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded">sk_live_...a7b2</code>
+                                <button class="text-neutral-600 hover:text-neutral-900">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
+                            <div>
+                                <p class="text-neutral-900 font-medium">Development Key</p>
+                                <p class="text-neutral-600 text-sm">Created on Jan 10, 2024</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <code class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded">sk_test_...93c4</code>
+                                <button class="text-neutral-600 hover:text-neutral-900">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
