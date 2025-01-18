@@ -13,6 +13,13 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'error',
+    messages.SUCCESS: 'success',
+}
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +33,7 @@ SECRET_KEY = 'django-insecure-#i*29z#*p!^qpt9+7np_@^s)!gvtyz*x^6ab5m^got(9$j0oy(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'ToxicityAnalyzer',
 ]
 
@@ -53,7 +61,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'API.urls'
-
+AUTH_USER_MODEL = 'ToxicityAnalyzer.CustomUser'
+LOGIN_URL = '/auth/'
+LOGIN_REDIRECT_URL = '/dashboard/'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -76,17 +86,21 @@ WSGI_APPLICATION = 'API.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  # <-- UPDATED line
+        'NAME': 'noShadeApi',                 # <-- UPDATED line
+        'USER': 'root',                     # <-- UPDATED line
+        'PASSWORD': 'Ansh@9013',              # <-- UPDATED line
+        'HOST': 'localhost',                # <-- UPDATED line
+        'PORT': '3306',
     }
 }
 
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -102,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+CSRF_TRUSTED_ORIGINS = ["https://318e-2401-4900-1f37-51bd-7802-525f-d376-37dc.ngrok-free.app"]
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -119,10 +133,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
