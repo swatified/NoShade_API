@@ -64,3 +64,9 @@ tzdata==2024.2
 urllib3==2.3.0
 uvicorn==0.34.0
 websockets==14.1
+pymysql==1.1.0
+mysqlclient==2.2.1
+gunicorn==21.2.0
+whitenoise==6.6.0
+waitress==2.1.2
+djangorestframework-simplejwt==5.3.1
