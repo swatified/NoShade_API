@@ -1,0 +1,145 @@
+<section id="reports" class="min-h-screen bg-neutral-900 text-neutral-200 px-4 py-16 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-4xl font-bold mb-8 text-white">Analytics Reports</h2>
+
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Comments Card -->
+            <div class="bg-neutral-800/50 border border-neutral-700/30 rounded-lg p-6 backdrop-blur-lg">
+                <h3 class="text-sm font-medium text-neutral-400 mb-2">Total Comments</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-bold text-white">2,547</span>
+                    <span class="text-emerald-400 text-sm">↑ 12.5%</span>
+                </div>
+            </div>
+
+            <!-- Sentiment Score -->
+            <div class="bg-neutral-800/50 border border-neutral-700/30 rounded-lg p-6 backdrop-blur-lg">
+                <h3 class="text-sm font-medium text-neutral-400 mb-2">Sentiment Score</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-bold text-white">8.4</span>
+                    <span class="text-emerald-400 text-sm">↑ 3.2%</span>
+                </div>
+            </div>
+
+            <!-- Response Rate -->
+            <div class="bg-neutral-800/50 border border-neutral-700/30 rounded-lg p-6 backdrop-blur-lg">
+                <h3 class="text-sm font-medium text-neutral-400 mb-2">Response Rate</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-bold text-white">92%</span>
+                    <span class="text-emerald-400 text-sm">↑ 5.7%</span>
+                </div>
+            </div>
+
+            <!-- Average Response Time -->
+            <div class="bg-neutral-800/50 border border-neutral-700/30 rounded-lg p-6 backdrop-blur-lg">
+                <h3 class="text-sm font-medium text-neutral-400 mb-2">Avg Response Time</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-bold text-white">2.5h</span>
+                    <span class="text-red-400 text-sm">↓ 1.8%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sentiment Analysis -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Sentiment Breakdown -->
+            <div class="bg-neutral-800/50 border border-neutral-700/30 rounded-lg p-6 backdrop-blur-lg">
+                <h3 class="text-xl font-semibold mb-6 text-white">Sentiment Breakdown</h3>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-neutral-300">Positive</span>
+                            <span class="text-neutral-300">75%</span>
+                        </div>
+                        <div class="w-full bg-neutral-700 rounded-full h-2">
+                            <div class="bg-emerald-500 h-2 rounded-full" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-neutral-300">Neutral</span>
+                            <span class="text-neutral-300">15%</span>
+                        </div>
+                        <div class="w-full bg-neutral-700 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 15%"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-neutral-300">Negative</span>
+                            <span class="text-neutral-300">10%</span>
+                        </div>
+                        <div class="w-full bg-neutral-700 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: 10%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Time Trends -->
+            <div class="bg-neutral-800/50 border border-neutral-700/30 rounded-lg p-6 backdrop-blur-lg">
+                <h3 class="text-xl font-semibold mb-6 text-white">Response Time Trends</h3>
+                <div class="h-64 flex items-end justify-between gap-2">
+                    <div class="h-40% w-8 bg-emerald-500/50 rounded-t"></div>
+                    <div class="h-60% w-8 bg-emerald-500/50 rounded-t"></div>
+                    <div class="h-45% w-8 bg-emerald-500/50 rounded-t"></div>
+                    <div class="h-80% w-8 bg-emerald-500/50 rounded-t"></div>
+                    <div class="h-70% w-8 bg-emerald-500/50 rounded-t"></div>
+                    <div class="h-90% w-8 bg-emerald-500/50 rounded-t"></div>
+                    <div class="h-75% w-8 bg-emerald-500/50 rounded-t"></div>
+                </div>
+                <div class="flex justify-between mt-4 text-neutral-400 text-sm">
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                    <span>Sun</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Comments -->
+        <div class="bg-neutral-800/50 border border-neutral-700/30 rounded-lg p-6 backdrop-blur-lg">
+            <h3 class="text-xl font-semibold mb-6 text-white">Recent Comments</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left border-b border-neutral-700">
+                            <th class="pb-4 text-neutral-400">User</th>
+                            <th class="pb-4 text-neutral-400">Comment</th>
+                            <th class="pb-4 text-neutral-400">Product</th>
+                            <th class="pb-4 text-neutral-400">Sentiment</th>
+                            <th class="pb-4 text-neutral-400">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-700">
+                        <tr class="text-neutral-300">
+                            <td class="py-4">John D.</td>
+                            <td class="py-4">Great product, exactly what I needed!</td>
+                            <td class="py-4">Product A</td>
+                            <td class="py-4"><span class="text-emerald-400">Positive</span></td>
+                            <td class="py-4">2m ago</td>
+                        </tr>
+                        <tr class="text-neutral-300">
+                            <td class="py-4">Sarah M.</td>
+                            <td class="py-4">The quality could be better.</td>
+                            <td class="py-4">Product B</td>
+                            <td class="py-4"><span class="text-yellow-400">Neutral</span></td>
+                            <td class="py-4">15m ago</td>
+                        </tr>
+                        <tr class="text-neutral-300">
+                            <td class="py-4">Mike R.</td>
+                            <td class="py-4">Not satisfied with the delivery.</td>
+                            <td class="py-4">Product C</td>
+                            <td class="py-4"><span class="text-red-400">Negative</span></td>
+                            <td class="py-4">1h ago</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

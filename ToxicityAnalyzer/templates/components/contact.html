@@ -1,0 +1,114 @@
+<div id="root">
+    <section id="contact" class="py-24 bg-neutral-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 animate__animated animate__fadeIn">
+          <h2 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-neutral-900 to-neutral-600 bg-clip-text text-transparent mb-4">
+            Get in Touch
+          </h2>
+          <p class="text-neutral-600 max-w-2xl mx-auto">
+            Have questions? We're here to help you build a safer online community
+          </p>
+        </div>
+  
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          <!-- Contact Form -->
+          <div class="bg-white p-8 rounded-2xl border border-neutral-200 shadow-lg animate__animated animate__fadeInLeft">
+            <form id="contactForm" class="space-y-6">
+              <div class="space-y-2">
+                <label for="name" class="block text-sm font-medium text-neutral-700">Name</label>
+                <input type="text" id="name" name="name" required
+                  class="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors outline-none"
+                  placeholder="John Doe">
+              </div>
+  
+              <div class="space-y-2">
+                <label for="email" class="block text-sm font-medium text-neutral-700">Email</label>
+                <input type="email" id="email" name="email" required
+                  class="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors outline-none"
+                  placeholder="john@company.com">
+              </div>
+  
+              <div class="space-y-2">
+                <label for="subject" class="block text-sm font-medium text-neutral-700">Subject</label>
+                <select id="subject" name="subject" required
+                  class="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors outline-none">
+                  <option value="">Select a subject</option>
+                  <option value="sales">Sales Inquiry</option>
+                  <option value="support">Technical Support</option>
+                  <option value="feature">Feature Request</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+  
+              <div class="space-y-2">
+                <label for="message" class="block text-sm font-medium text-neutral-700">Message</label>
+                <textarea id="message" name="message" rows="4" required
+                  class="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors outline-none"
+                  placeholder="Your message here..."></textarea>
+              </div>
+  
+              <button type="submit"
+                class="w-full py-3 px-6 rounded-xl bg-neutral-900 text-white hover:bg-neutral-800 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2">
+                Send Message
+              </button>
+            </form>
+          </div>
+  
+          <!-- Contact Info -->
+          <div class="space-y-8 animate__animated animate__fadeInRight">
+            <div class="bg-white p-6 rounded-2xl border border-neutral-200 hover:border-neutral-300 transition-all duration-300 hover:shadow-lg">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-neutral-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-semibold mb-1">Email Us</h3>
+                  <a href="mailto:support@noshade.api" class="text-neutral-600 hover:text-neutral-900 transition-colors">support@noshade.api</a>
+                </div>
+              </div>
+            </div>
+  
+            <div class="bg-white p-6 rounded-2xl border border-neutral-200 hover:border-neutral-300 transition-all duration-300 hover:shadow-lg">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-neutral-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-semibold mb-1">Live Chat</h3>
+                  <p class="text-neutral-600">Available 24/7 for enterprise customers</p>
+                </div>
+              </div>
+            </div>
+  
+            <div class="bg-white p-6 rounded-2xl border border-neutral-200 hover:border-neutral-300 transition-all duration-300 hover:shadow-lg">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-neutral-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-semibold mb-1">Documentation</h3>
+                  <a href="#documentation" class="text-neutral-600 hover:text-neutral-900 transition-colors">View our detailed guides</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  
+    <script>
+      const form = document.getElementById('contactForm');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Add your form submission logic here
+        alert('Form submitted successfully!');
+        form.reset();
+      });
+    </script>
+  </div>
