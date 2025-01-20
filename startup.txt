@@ -1,1 +1,0 @@
-gunicorn API.wsgi:application --config gunicorn.conf.py
