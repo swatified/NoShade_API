@@ -14,16 +14,14 @@ __pycache__/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
-staticfiles/
+
 
 # TensorFlow/Model files
-toxicity_model/
 *.pb
 *.data-*
 *.index
 vectorizer.pkl
-model_artifacts/
+
 
 # IDE specific files
 .vscode/
