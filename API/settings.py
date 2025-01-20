@@ -1,10 +1,6 @@
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
-from dotenv import load_dotenv
-
-# Load environment variables from .env file if it exists
-load_dotenv()
 
 MESSAGE_TAGS = {
     messages.ERROR: 'error',
@@ -14,11 +10,9 @@ MESSAGE_TAGS = {
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+# Security settings
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['noshade-web.azurewebsites.net', 'localhost', '127.0.0.1']
 
@@ -69,22 +63,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'API.wsgi.application'
 
-# Database
+# Database configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('AZURE_MYSQL_NAME'),
-        'USER': os.getenv('AZURE_MYSQL_USER'),
-        'PASSWORD': os.getenv('AZURE_MYSQL_PASSWORD'),
-        'HOST': os.getenv('AZURE_MYSQL_HOST'),
-        'PORT': os.getenv('AZURE_MYSQL_PORT', '3306'),
+        'NAME': os.environ.get('AZURE_MYSQL_NAME'),
+        'USER': os.environ.get('AZURE_MYSQL_USER'),
+        'PASSWORD': os.environ.get('AZURE_MYSQL_PASSWORD'),
+        'HOST': os.environ.get('AZURE_MYSQL_HOST'),
+        'PORT': os.environ.get('AZURE_MYSQL_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
-            'connect_timeout': 60,
-            'ssl': {'ssl-mode': 'require'},
-            'isolation_level': 'read committed',
-            'autocommit': True
+            'ssl': {'ssl-mode': 'require'}
         }
     }
 }
@@ -105,9 +96,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# CSRF settings
+# CSRF Settings
 CSRF_TRUSTED_ORIGINS = [
-    "https://318e-2401-4900-1f37-51bd-7802-525f-d376-37dc.ngrok-free.app",
     "https://noshade-web.azurewebsites.net"
 ]
 
@@ -117,7 +107,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
