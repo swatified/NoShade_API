@@ -79,7 +79,7 @@ class APIKeyView(LoginRequiredMixin, View):
 
 
 class DocsView(TemplateView):
-    template_name = 'docs.html'
+    template_name = 'Docs.html'
 
 
 class LogoutView(View):
