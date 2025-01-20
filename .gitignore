@@ -54,3 +54,8 @@ htmlcov/
 *.bak
 *.tmp
 *.temp
+
+# Environment Variables
+.env
+*.env
+.env.*

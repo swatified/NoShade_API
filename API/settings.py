@@ -1,6 +1,10 @@
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 MESSAGE_TAGS = {
     messages.ERROR: 'error',
@@ -11,11 +15,10 @@ MESSAGE_TAGS = {
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# In production, get this from environment variable
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-#i*29z#*p!^qpt9+7np_@^s)!gvtyz*x^6ab5m^got(9$j0oy(')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['noshade-web.azurewebsites.net', 'localhost', '127.0.0.1']
 
@@ -70,10 +73,10 @@ WSGI_APPLICATION = 'API.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('AZURE_MYSQL_NAME', 'noShadeDB'),
-        'USER': os.getenv('AZURE_MYSQL_USER', 'swati'),
-        'PASSWORD': os.getenv('AZURE_MYSQL_PASSWORD', 'password'),
-        'HOST': os.getenv('AZURE_MYSQL_HOST', 'db-name.mysql.database.azure.com'),
+        'NAME': os.getenv('AZURE_MYSQL_NAME'),
+        'USER': os.getenv('AZURE_MYSQL_USER'),
+        'PASSWORD': os.getenv('AZURE_MYSQL_PASSWORD'),
+        'HOST': os.getenv('AZURE_MYSQL_HOST'),
         'PORT': os.getenv('AZURE_MYSQL_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
