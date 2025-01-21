@@ -1,45 +1,46 @@
 import os
 import json
-import numpy as np
-import scipy.sparse as sp
-from transformers import pipeline
-from sklearn.feature_extraction.text import TfidfVectorizer
-import joblib
 import re
+from transformers import pipeline
+import joblib
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid
-
+import scipy.sparse as sp
 
 class ToxicityAnalyzer:
     def __init__(self):
         self.model_dir = os.path.join(settings.BASE_DIR, 'model_artifacts')
-
         os.makedirs(self.model_dir, exist_ok=True)
 
         self.model_path = os.path.join(self.model_dir, 'logistic_model.joblib')
-        self.vectorizer_path = os.path.join(
-            self.model_dir, 'tfidf_vectorizer.joblib')
-        self.sentiment_cache_path = os.path.join(
-            self.model_dir, 'sentiment_cache.json')
+        self.vectorizer_path = os.path.join(self.model_dir, 'tfidf_vectorizer.joblib')
+        self.sentiment_cache_path = os.path.join(self.model_dir, 'sentiment_cache.json')
 
-        self.label_columns = ['toxic', 'severe_toxic',
-                              'obscene', 'threat', 'insult', 'identity_hate']
-
-        self.sentiment_analyzer = pipeline(
-            "sentiment-analysis",
-            model="cardiffnlp/twitter-roberta-base-sentiment"
-        )
+        self.label_columns = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
+        
+        # Initialize sentiment analyzer with CPU device
+        try:
+            self.sentiment_analyzer = pipeline(
+                "sentiment-analysis",
+                model="cardiffnlp/twitter-roberta-base-sentiment",
+                device=-1  # Force CPU
+            )
+        except Exception as e:
+            print(f"Error initializing sentiment analyzer: {str(e)}")
+            self.sentiment_analyzer = None
 
         self.sentiment_cache = self._load_sentiment_cache()
 
+        # Check if model files exist and load them
         if os.path.exists(self.model_path) and os.path.exists(self.vectorizer_path):
+            print("Loading model files...")  # Debug log
             self.vectorizer = joblib.load(self.vectorizer_path)
             self.model = joblib.load(self.model_path)
+            print("Model files loaded successfully")  # Debug log
         else:
-            raise FileNotFoundError(
-                "Model files not found. Please train the model first.")
+            raise FileNotFoundError("Model files not found. Please train the model first.")
 
     def _load_sentiment_cache(self):
         if os.path.exists(self.sentiment_cache_path):
@@ -56,62 +57,100 @@ class ToxicityAnalyzer:
         return re.sub(r'[^a-zA-Z\s]', '', text)
 
     def get_sentiment(self, text):
-        if text in self.sentiment_cache:
-            return self.sentiment_cache[text]
+        try:
+            if text in self.sentiment_cache:
+                return self.sentiment_cache[text]
 
-        result = self.sentiment_analyzer(text, truncation=True, max_length=128)
-        sentiment_map = {
-            'LABEL_0': [1, 0, 0],  # Negative
-            'LABEL_1': [0, 1, 0],  # Neutral
-            'LABEL_2': [0, 0, 1]   # Positive
-        }
-        sentiment = sentiment_map[result[0]['label']]
+            if not self.sentiment_analyzer:
+                print("Sentiment analyzer not available, returning neutral")  # Debug log
+                return [0, 1, 0]  # Default to neutral if analyzer isn't available
 
-        self.sentiment_cache[text] = sentiment
-        self._save_sentiment_cache()
-        return sentiment
+            result = self.sentiment_analyzer(text, truncation=True, max_length=128)
+            
+            # Convert torch tensor to Python list
+            label = result[0]['label']
+            score = float(result[0]['score'])  # Convert to Python float
+
+            sentiment_map = {
+                'LABEL_0': [1, 0, 0],  # Negative
+                'LABEL_1': [0, 1, 0],  # Neutral
+                'LABEL_2': [0, 0, 1]   # Positive
+            }
+            sentiment = sentiment_map.get(label, [0, 1, 0])  # Default to neutral if unknown label
+
+            self.sentiment_cache[text] = sentiment
+            self._save_sentiment_cache()
+            return sentiment
+        except Exception as e:
+            print(f"Error in sentiment analysis: {str(e)}")  # Debug log
+            return [0, 1, 0]  # Default to neutral on error
 
     def analyze(self, text):
-        cleaned_text = self.clean_text(text)
-
-        # Get features
-        X_tfidf = self.vectorizer.transform([cleaned_text])
-        sentiment_features = np.array([self.get_sentiment(cleaned_text)])
-        X_combined = sp.hstack([X_tfidf, sp.csr_matrix(sentiment_features)])
-
-        # Get predictions
-        predictions = [clf.predict(X_combined)[0]
-                       for clf in self.model.estimators_]
-
-        # Format sentiment output
-        sentiment_labels = ['Negative', 'Neutral', 'Positive']
-        dominant_sentiment = sentiment_labels[np.argmax(sentiment_features[0])]
-
-        # Get detected labels
-        detected_labels = []
-        if dominant_sentiment == 'Negative':
+        try:
+            cleaned_text = self.clean_text(text)
+            print(f"Analyzing text: {cleaned_text}")  # Debug log
+            
+            # Get TFIDF features
+            X_tfidf = self.vectorizer.transform([cleaned_text])
+            print(f"TFIDF shape: {X_tfidf.shape}")  # Debug log
+            
+            # Get sentiment features
+            sentiment_features = self.get_sentiment(cleaned_text)
+            print(f"Sentiment features: {sentiment_features}")  # Debug log
+            
+            # Convert sentiment features to sparse matrix
+            sentiment_matrix = sp.csr_matrix([sentiment_features])
+            
+            # Combine features using scipy
+            X_combined = sp.hstack([X_tfidf, sentiment_matrix])
+            print(f"Combined features shape: {X_combined.shape}")  # Debug log
+            
+            # Make predictions
+            predictions = []
+            for clf in self.model.estimators_:
+                pred = clf.predict(X_combined)[0]
+                predictions.append(pred)
+            print(f"Raw predictions: {predictions}")  # Debug log
+                
+            # Determine sentiment
+            sentiment_labels = ['Negative', 'Neutral', 'Positive']
+            max_sentiment_value = max(sentiment_features)
+            max_sentiment_idx = sentiment_features.index(max_sentiment_value)
+            dominant_sentiment = sentiment_labels[max_sentiment_idx]
+            
+            # Get detected labels
+            detected_labels = []
             for label, pred in zip(self.label_columns, predictions):
                 if pred == 1:
                     detected_labels.append(label.replace('_', ' ').title())
-
-        return {
-            'sentiment': dominant_sentiment,
-            'toxic_labels': '\n'.join(detected_labels) if detected_labels else "No toxic labels detected"
-        }
+            
+            print(f"Final sentiment: {dominant_sentiment}")  # Debug log
+            print(f"Final labels: {detected_labels}")  # Debug log
+            
+            return {
+                'sentiment': dominant_sentiment,
+                'toxic_labels': ', '.join(detected_labels) if detected_labels else "No toxic labels detected"
+            }
+        except Exception as e:
+            print(f"Error in analysis: {str(e)}")  # Debug log
+            return {
+                'sentiment': 'Error',
+                'toxic_labels': f"Analysis failed: {str(e)}"
+            }
 
 
 class CustomUser(AbstractUser):
-        email = models.CharField(max_length=100, unique=True)
-        USERNAME_FIELD = 'email'
-        api_key = models.CharField(max_length=100, null=True, blank=True)
-        api_usage = models.IntegerField(default=0)
-        subscribed = models.BooleanField(default=False)
-        subscription_date = models.DateTimeField(null=True, blank=True)
-        subscription_expiry = models.DateTimeField(null=True, blank=True)
-        subscription_plan = models.CharField(
-            max_length=100, null=True, blank=True)
-        company = models.CharField(max_length=100, null=True, blank=True)
-        REQUIRED_FIELDS = ['username', 'password']
+    email = models.CharField(max_length=100, unique=True)
+    USERNAME_FIELD = 'email'
+    api_key = models.CharField(max_length=100, null=True, blank=True)
+    api_usage = models.IntegerField(default=0)
+    subscribed = models.BooleanField(default=False)
+    subscription_date = models.DateTimeField(null=True, blank=True)
+    subscription_expiry = models.DateTimeField(null=True, blank=True)
+    subscription_plan = models.CharField(max_length=100, null=True, blank=True)
+    company = models.CharField(max_length=100, null=True, blank=True)
+    REQUIRED_FIELDS = ['username', 'password']
+
 
 class APIKey(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='api_keys')
