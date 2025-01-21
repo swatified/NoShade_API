@@ -4,6 +4,8 @@ import re
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 import joblib
 from django.conf import settings
+from django.db import models
+from django.contrib.auth.models import AbstractUser
 import torch
 
 class ToxicityAnalyzer:
