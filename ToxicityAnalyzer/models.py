@@ -1,13 +1,10 @@
 import os
 import json
 import re
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 import joblib
 from django.conf import settings
-from django.db import models
-from django.contrib.auth.models import AbstractUser
-import uuid
-import scipy.sparse as sp
+import torch
 
 class ToxicityAnalyzer:
     def __init__(self):
@@ -20,25 +17,25 @@ class ToxicityAnalyzer:
 
         self.label_columns = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
         
-        # Initialize sentiment analyzer with CPU device
+        # Initialize sentiment analyzer with simpler approach
         try:
+            print("Loading sentiment model from Hugging Face...")
             self.sentiment_analyzer = pipeline(
-                "sentiment-analysis",
+                task="sentiment-analysis",
                 model="cardiffnlp/twitter-roberta-base-sentiment",
-                device=-1  # Force CPU
+                tokenizer="cardiffnlp/twitter-roberta-base-sentiment",
+                device="cpu"  # Force CPU usage
             )
         except Exception as e:
-            print(f"Error initializing sentiment analyzer: {str(e)}")
+            print(f"Error loading sentiment model: {str(e)}")
             self.sentiment_analyzer = None
 
         self.sentiment_cache = self._load_sentiment_cache()
 
-        # Check if model files exist and load them
+        # Load toxicity models
         if os.path.exists(self.model_path) and os.path.exists(self.vectorizer_path):
-            print("Loading model files...")  # Debug log
             self.vectorizer = joblib.load(self.vectorizer_path)
             self.model = joblib.load(self.model_path)
-            print("Model files loaded successfully")  # Debug log
         else:
             raise FileNotFoundError("Model files not found. Please train the model first.")
 

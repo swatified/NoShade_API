@@ -14,7 +14,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = False
 
-ALLOWED_HOSTS = ['noshade-web.azurewebsites.net', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'noshade-web.azurewebsites.net',
+    '169.254.130.2',
+    'localhost',
+    '127.0.0.1',
+    '*'
+]
 
 # Application definition
 INSTALLED_APPS = [
