@@ -22,18 +22,26 @@ class ToxicityAnalyzer:
         
         # Azure Storage settings with environment variables
         try:
-            self.connection_string = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
-            if not self.connection_string:
-                raise ValueError("Azure Storage connection string not found in environment variables")
-            
-            self.container_name = "model-artifacts"
-            
-            # Initialize Azure client
-            self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
-            self.container_client = self.blob_service_client.get_container_client(self.container_name)
-            
-            # Download and initialize sentiment model
-            self._download_sentiment_model()
+            if 'AZURE_STORAGE_CONNECTION_STRING' not in os.environ:
+                print("Azure connection string not found in environment variables, skipping Azure storage")
+                self.blob_service_client = None
+                self.container_client = None
+            else:
+                self.connection_string = os.environ['AZURE_STORAGE_CONNECTION_STRING']
+                self.container_name = "model-artifacts"
+                
+                # Initialize Azure client
+                self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
+                self.container_client = self.blob_service_client.get_container_client(self.container_name)
+                
+                # Download and initialize sentiment model
+                self._download_sentiment_model()
+        except Exception as e:
+            print(f"Error initializing Azure storage: {str(e)}")
+            self.blob_service_client = None
+            self.container_client = None
+        
+        try:
             print("Loading sentiment model...")
             self.sentiment_analyzer = pipeline(
                 task="sentiment-analysis",
@@ -42,10 +50,8 @@ class ToxicityAnalyzer:
                 local_files_only=True
             )
         except Exception as e:
-            print(f"Error initializing Azure storage or model: {str(e)}")
+            print(f"Error loading sentiment model: {str(e)}")
             self.sentiment_analyzer = None
-            self.blob_service_client = None
-            self.container_client = None
 
         self.sentiment_cache = self._load_sentiment_cache()
         self.label_columns = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
@@ -85,7 +91,6 @@ class ToxicityAnalyzer:
         except Exception as e:
             print(f"Error downloading from Azure: {str(e)}")
 
-    # Rest of the class remains unchanged...
     def _load_sentiment_cache(self):
         if os.path.exists(self.sentiment_cache_path):
             with open(self.sentiment_cache_path, 'r') as f:
@@ -175,7 +180,7 @@ class ToxicityAnalyzer:
                 'toxic_labels': f"Analysis failed: {str(e)}"
             }
 
-# These classes remain unchanged
+
 class CustomUser(AbstractUser):
     email = models.CharField(max_length=100, unique=True)
     USERNAME_FIELD = 'email'
@@ -187,6 +192,7 @@ class CustomUser(AbstractUser):
     subscription_plan = models.CharField(max_length=100, null=True, blank=True)
     company = models.CharField(max_length=100, null=True, blank=True)
     REQUIRED_FIELDS = ['username', 'password']
+
 
 class APIKey(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='api_keys')
