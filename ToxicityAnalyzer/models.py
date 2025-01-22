@@ -20,18 +20,19 @@ class ToxicityAnalyzer:
         self.vectorizer_path = os.path.join(self.model_dir, 'tfidf_vectorizer.joblib')
         self.sentiment_cache_path = os.path.join(self.model_dir, 'sentiment_cache.json')
         
-        # Azure Storage settings
-        self.connection_string = settings.AZURE_STORAGE_CONNECTION_STRING
-        self.container_name = "model-artifacts"
-        
-        self.label_columns = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
-        
-        # Initialize Azure client
-        self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
-        self.container_client = self.blob_service_client.get_container_client(self.container_name)
-        
-        # Download and initialize sentiment model
+        # Azure Storage settings with environment variables
         try:
+            self.connection_string = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
+            if not self.connection_string:
+                raise ValueError("Azure Storage connection string not found in environment variables")
+            
+            self.container_name = "model-artifacts"
+            
+            # Initialize Azure client
+            self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
+            self.container_client = self.blob_service_client.get_container_client(self.container_name)
+            
+            # Download and initialize sentiment model
             self._download_sentiment_model()
             print("Loading sentiment model...")
             self.sentiment_analyzer = pipeline(
@@ -41,10 +42,13 @@ class ToxicityAnalyzer:
                 local_files_only=True
             )
         except Exception as e:
-            print(f"Error loading sentiment model: {str(e)}")
+            print(f"Error initializing Azure storage or model: {str(e)}")
             self.sentiment_analyzer = None
+            self.blob_service_client = None
+            self.container_client = None
 
         self.sentiment_cache = self._load_sentiment_cache()
+        self.label_columns = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 
         # Load toxicity models
         if os.path.exists(self.model_path) and os.path.exists(self.vectorizer_path):
@@ -55,25 +59,33 @@ class ToxicityAnalyzer:
 
     def _download_sentiment_model(self):
         """Download sentiment model files from Azure Blob Storage"""
+        if not self.container_client:
+            print("Azure Storage not initialized, skipping download")
+            return
+            
         model_path = os.path.join(self.model_dir, 'sentiment_model')
         os.makedirs(model_path, exist_ok=True)
         
-        # List all blobs in the sentiment_model folder
-        blobs = self.container_client.list_blobs(name_starts_with='sentiment_model/')
-        
-        for blob in blobs:
-            # Get local file path
-            local_path = os.path.join(self.model_dir, blob.name)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        try:
+            # List all blobs in the sentiment_model folder
+            blobs = self.container_client.list_blobs(name_starts_with='sentiment_model/')
             
-            # Download if not exists
-            if not os.path.exists(local_path):
-                print(f"Downloading {blob.name}...")
-                blob_client = self.container_client.get_blob_client(blob.name)
-                with open(local_path, "wb") as file:
-                    data = blob_client.download_blob()
-                    file.write(data.readall())
+            for blob in blobs:
+                # Get local file path
+                local_path = os.path.join(self.model_dir, blob.name)
+                os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                
+                # Download if not exists
+                if not os.path.exists(local_path):
+                    print(f"Downloading {blob.name}...")
+                    blob_client = self.container_client.get_blob_client(blob.name)
+                    with open(local_path, "wb") as file:
+                        data = blob_client.download_blob()
+                        file.write(data.readall())
+        except Exception as e:
+            print(f"Error downloading from Azure: {str(e)}")
 
+    # Rest of the class remains unchanged...
     def _load_sentiment_cache(self):
         if os.path.exists(self.sentiment_cache_path):
             with open(self.sentiment_cache_path, 'r') as f:
