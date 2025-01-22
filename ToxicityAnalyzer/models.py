@@ -10,6 +10,7 @@ import uuid
 import scipy.sparse as sp
 from azure.storage.blob import BlobServiceClient
 import tempfile
+import torch
 
 class ToxicityAnalyzer:
     def __init__(self):
@@ -19,11 +20,18 @@ class ToxicityAnalyzer:
         self.model_path = os.path.join(self.model_dir, 'logistic_model.joblib')
         self.vectorizer_path = os.path.join(self.model_dir, 'tfidf_vectorizer.joblib')
         self.sentiment_cache_path = os.path.join(self.model_dir, 'sentiment_cache.json')
-        
-        # Azure Storage settings with environment variables
+        self.sentiment_model_path = os.path.join(self.model_dir, 'sentiment_model')
+        os.makedirs(self.sentiment_model_path, exist_ok=True)
+
+        # Configure environment for offline mode
+        os.environ['TRANSFORMERS_OFFLINE'] = '1'
+        os.environ['HF_DATASETS_OFFLINE'] = '1'
+        os.environ['HF_HUB_OFFLINE'] = '1'
+
+        # Azure Storage settings
         try:
             if 'AZURE_STORAGE_CONNECTION_STRING' not in os.environ:
-                print("Azure connection string not found in environment variables, skipping Azure storage")
+                print("Azure connection string not found in environment variables, checking for local models")
                 self.blob_service_client = None
                 self.container_client = None
             else:
@@ -34,23 +42,36 @@ class ToxicityAnalyzer:
                 self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
                 self.container_client = self.blob_service_client.get_container_client(self.container_name)
                 
-                # Download and initialize sentiment model
-                self._download_sentiment_model()
+                # Check for model files
+                required_files = ['config.json', 'pytorch_model.bin', 'tokenizer.json', 'tokenizer_config.json']
+                files_missing = not all(os.path.exists(os.path.join(self.sentiment_model_path, f)) 
+                                     for f in required_files)
+                
+                if files_missing:
+                    print("Some model files missing, attempting to download from Azure...")
+                    self._download_sentiment_model()
+
         except Exception as e:
             print(f"Error initializing Azure storage: {str(e)}")
             self.blob_service_client = None
             self.container_client = None
         
+        # Initialize sentiment analyzer
         try:
-            print("Loading sentiment model...")
-            self.sentiment_analyzer = pipeline(
-                task="sentiment-analysis",
-                model=os.path.join(self.model_dir, 'sentiment_model'),
-                device="cpu",
-                local_files_only=True
-            )
+            print(f"Loading sentiment model from {self.sentiment_model_path}")
+            if os.path.exists(os.path.join(self.sentiment_model_path, 'pytorch_model.bin')):
+                print("Found model files, loading sentiment analyzer...")
+                self.sentiment_analyzer = pipeline(
+                    task="sentiment-analysis",
+                    model=self.sentiment_model_path,
+                    device="cpu",
+                    local_files_only=True
+                )
+            else:
+                print("No model files found, initializing without sentiment analyzer")
+                self.sentiment_analyzer = None
         except Exception as e:
-            print(f"Error loading sentiment model: {str(e)}")
+            print(f"Error loading sentiment model (using neutral fallback): {str(e)}")
             self.sentiment_analyzer = None
 
         self.sentiment_cache = self._load_sentiment_cache()
@@ -69,27 +90,38 @@ class ToxicityAnalyzer:
             print("Azure Storage not initialized, skipping download")
             return
             
-        model_path = os.path.join(self.model_dir, 'sentiment_model')
-        os.makedirs(model_path, exist_ok=True)
-        
         try:
-            # List all blobs in the sentiment_model folder
+            print("Listing blobs in sentiment_model folder...")
             blobs = self.container_client.list_blobs(name_starts_with='sentiment_model/')
+            blob_count = 0
             
             for blob in blobs:
-                # Get local file path
+                blob_count += 1
                 local_path = os.path.join(self.model_dir, blob.name)
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 
-                # Download if not exists
                 if not os.path.exists(local_path):
                     print(f"Downloading {blob.name}...")
                     blob_client = self.container_client.get_blob_client(blob.name)
                     with open(local_path, "wb") as file:
                         data = blob_client.download_blob()
                         file.write(data.readall())
+                    print(f"Successfully downloaded {blob.name}")
+            
+            print(f"Downloaded {blob_count} files")
+            
+            # Verify critical files
+            critical_files = ['config.json', 'pytorch_model.bin']
+            for file in critical_files:
+                path = os.path.join(self.sentiment_model_path, file)
+                if not os.path.exists(path):
+                    print(f"Warning: Critical file {file} not found after download")
+                else:
+                    print(f"Verified: {file} exists")
+
         except Exception as e:
             print(f"Error downloading from Azure: {str(e)}")
+            raise
 
     def _load_sentiment_cache(self):
         if os.path.exists(self.sentiment_cache_path):
@@ -108,17 +140,20 @@ class ToxicityAnalyzer:
     def get_sentiment(self, text):
         try:
             if text in self.sentiment_cache:
+                print("Using cached sentiment")
                 return self.sentiment_cache[text]
 
             if not self.sentiment_analyzer:
                 print("Sentiment analyzer not available, returning neutral")
                 return [0, 1, 0]  # Default to neutral if analyzer isn't available
 
+            print("Performing sentiment analysis...")
             result = self.sentiment_analyzer(text, truncation=True, max_length=128)
+            print(f"Raw sentiment result: {result}")
             
-            # Convert torch tensor to Python list
             label = result[0]['label']
             score = float(result[0]['score'])
+            print(f"Label: {label}, Score: {score}")
 
             sentiment_map = {
                 'LABEL_0': [1, 0, 0],  # Negative
