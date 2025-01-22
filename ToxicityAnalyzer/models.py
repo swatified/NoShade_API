@@ -1,14 +1,21 @@
 import os
 import json
 import re
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
-import joblib
-from django.conf import settings
+import uuid
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+import joblib
+import scipy.sparse as sp
 import torch
+from transformers import (
+    pipeline,
+    AutoTokenizer,
+    AutoModelForSequenceClassification
+)
 
 class ToxicityAnalyzer:
+    # Rest of the code remains exactly the same
     def __init__(self):
         self.model_dir = os.path.join(settings.BASE_DIR, 'model_artifacts')
         os.makedirs(self.model_dir, exist_ok=True)
