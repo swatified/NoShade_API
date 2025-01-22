@@ -23,11 +23,6 @@ class ToxicityAnalyzer:
         self.sentiment_model_path = os.path.join(self.model_dir, 'sentiment_model')
         os.makedirs(self.sentiment_model_path, exist_ok=True)
 
-        # Configure environment for offline mode
-        os.environ['TRANSFORMERS_OFFLINE'] = '1'
-        os.environ['HF_DATASETS_OFFLINE'] = '1'
-        os.environ['HF_HUB_OFFLINE'] = '1'
-
         # Azure Storage settings
         try:
             if 'AZURE_STORAGE_CONNECTION_STRING' not in os.environ:
@@ -38,12 +33,18 @@ class ToxicityAnalyzer:
                 self.connection_string = os.environ['AZURE_STORAGE_CONNECTION_STRING']
                 self.container_name = "model-artifacts"
                 
-                # Initialize Azure client
                 self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
                 self.container_client = self.blob_service_client.get_container_client(self.container_name)
                 
                 # Check for model files
-                required_files = ['config.json', 'pytorch_model.bin', 'tokenizer.json', 'tokenizer_config.json']
+                required_files = [
+                    'config.json', 
+                    'pytorch_model.bin', 
+                    'tokenizer.json', 
+                    'tokenizer_config.json',
+                    'vocab.json',
+                    'merges.txt'
+                ]
                 files_missing = not all(os.path.exists(os.path.join(self.sentiment_model_path, f)) 
                                      for f in required_files)
                 
@@ -61,17 +62,25 @@ class ToxicityAnalyzer:
             print(f"Loading sentiment model from {self.sentiment_model_path}")
             if os.path.exists(os.path.join(self.sentiment_model_path, 'pytorch_model.bin')):
                 print("Found model files, loading sentiment analyzer...")
+                model = AutoModelForSequenceClassification.from_pretrained(
+                    self.sentiment_model_path,
+                    local_files_only=True
+                )
+                tokenizer = AutoTokenizer.from_pretrained(
+                    self.sentiment_model_path,
+                    local_files_only=True
+                )
                 self.sentiment_analyzer = pipeline(
                     task="sentiment-analysis",
-                    model=self.sentiment_model_path,
-                    device="cpu",
-                    local_files_only=True
+                    model=model,
+                    tokenizer=tokenizer,
+                    device="cpu"
                 )
             else:
                 print("No model files found, initializing without sentiment analyzer")
                 self.sentiment_analyzer = None
         except Exception as e:
-            print(f"Error loading sentiment model (using neutral fallback): {str(e)}")
+            print(f"Error loading sentiment model: {str(e)}")
             self.sentiment_analyzer = None
 
         self.sentiment_cache = self._load_sentiment_cache()
@@ -85,39 +94,30 @@ class ToxicityAnalyzer:
             raise FileNotFoundError("Model files not found. Please train the model first.")
 
     def _download_sentiment_model(self):
-        """Download sentiment model files from Azure Blob Storage"""
         if not self.container_client:
             print("Azure Storage not initialized, skipping download")
             return
             
         try:
+            print(f"Sentiment model path: {self.sentiment_model_path}")
             print("Listing blobs in sentiment_model folder...")
             blobs = self.container_client.list_blobs(name_starts_with='sentiment_model/')
-            blob_count = 0
             
             for blob in blobs:
-                blob_count += 1
                 local_path = os.path.join(self.model_dir, blob.name)
+                print(f"Downloading {blob.name} to {local_path}")
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 
                 if not os.path.exists(local_path):
-                    print(f"Downloading {blob.name}...")
                     blob_client = self.container_client.get_blob_client(blob.name)
                     with open(local_path, "wb") as file:
                         data = blob_client.download_blob()
                         file.write(data.readall())
-                    print(f"Successfully downloaded {blob.name}")
+                    print(f"Downloaded: {os.path.getsize(local_path)} bytes")
             
-            print(f"Downloaded {blob_count} files")
-            
-            # Verify critical files
-            critical_files = ['config.json', 'pytorch_model.bin']
-            for file in critical_files:
-                path = os.path.join(self.sentiment_model_path, file)
-                if not os.path.exists(path):
-                    print(f"Warning: Critical file {file} not found after download")
-                else:
-                    print(f"Verified: {file} exists")
+            print("\nVerifying downloaded files:")
+            for file in os.listdir(self.sentiment_model_path):
+                print(f"- {file}")
 
         except Exception as e:
             print(f"Error downloading from Azure: {str(e)}")
@@ -145,7 +145,7 @@ class ToxicityAnalyzer:
 
             if not self.sentiment_analyzer:
                 print("Sentiment analyzer not available, returning neutral")
-                return [0, 1, 0]  # Default to neutral if analyzer isn't available
+                return [0, 1, 0]
 
             print("Performing sentiment analysis...")
             result = self.sentiment_analyzer(text, truncation=True, max_length=128)
@@ -181,7 +181,6 @@ class ToxicityAnalyzer:
             print(f"Sentiment features: {sentiment_features}")
             
             sentiment_matrix = sp.csr_matrix([sentiment_features])
-            
             X_combined = sp.hstack([X_tfidf, sentiment_matrix])
             print(f"Combined features shape: {X_combined.shape}")
             
