@@ -36,7 +36,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        userdata = self.request.user
         context['user_data'] = {
             'first_name': self.request.user.first_name,
             'last_name': self.request.user.last_name,
@@ -221,52 +220,13 @@ class AnalyticsView(TemplateView):
         # Calculate toxicity rate
         toxicity_rate = round((toxic_comments / total_comments * 100 if total_comments > 0 else 0), 2)
 
-        # Get sentiment distribution
-        sentiment_distribution = Comment.objects.filter(
-                    created_at__range=(start_date, end_date)
-                ).values('sentiment').annotate(
-                    count=Count('id')
-                )
 
-        # Get top toxic labels
-        toxic_comments_analysis = Comment.objects.filter(
-                    created_at__range=(start_date, end_date),
-                    is_toxic=True,
-                    toxic_labels__isnull=False
-                ).exclude(toxic_labels='')
-
-        # Process toxic labels
-        toxic_labels_count = {}
-        for comment in toxic_comments_analysis:
-                labels = comment.toxic_labels.strip().split('\n')
-                for label in labels:
-                        if label:
-                                toxic_labels_count[label] = toxic_labels_count.get(label, 0) + 1
 
                     # Add all data to context
-        context.update({
-            'time_period': {
-                'start_date': start_date,
-                'end_date': end_date,
-                'days': days
-                },
-            'overview': {
-                'total_comments': total_comments,
-                'toxic_comments': toxic_comments,
-                'toxicity_rate': toxicity_rate
-                },
-            'sentiment_analysis': [
-                {'sentiment': item['sentiment'], 'count': item['count']}
-                    for item in sentiment_distribution
-            ],
-            'toxic_labels_analysis': [
-                {'label': label, 'count': count}
-                for label, count in sorted(
-                    toxic_labels_count.items(),
-                    key=lambda x: x[1],
-                    reverse=True
-                )
-            ]
-        })
+        context['content_data'] = {
+            'total_comments': total_comments,
+            'toxic_comments': toxic_comments,
+            'toxicity_rate': toxicity_rate
+        }
 
         return context
