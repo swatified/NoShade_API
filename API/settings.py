@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
-
+import datetime
 MESSAGE_TAGS = {
     messages.ERROR: 'error',
     messages.SUCCESS: 'success',
@@ -11,16 +11,10 @@ MESSAGE_TAGS = {
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
-DEBUG = False
+SECRET_KEY = 'fallback-secret-key'  # Use a static key for local development
+DEBUG = True  # Enable debugging for development
 
-ALLOWED_HOSTS = [
-    'noshade-web.azurewebsites.net',
-    '169.254.130.2',
-    'localhost',
-    '127.0.0.1',
-    '*'
-]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -34,10 +28,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'ToxicityAnalyzer',
 ]
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,39 +65,23 @@ WSGI_APPLICATION = 'API.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('AZURE_MYSQL_NAME'),
-        'USER': os.environ.get('AZURE_MYSQL_USER'),
-        'PASSWORD': os.environ.get('AZURE_MYSQL_PASSWORD'),
-        'HOST': os.environ.get('AZURE_MYSQL_HOST'),
-        'PORT': os.environ.get('AZURE_MYSQL_PORT', '3306'),
+        'NAME': 'noShadeApi',  # Replace with your local DB name
+        'USER': 'root',  # Replace with your local DB username
+        'PASSWORD': 'Ansh@9013',  # Replace with your local DB password
+        'HOST': 'localhost',  # Localhost for local setup
+        'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-            'ssl': {'ssl-mode': 'require'}
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
         }
     }
 }
 
 # Password validation
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+AUTH_PASSWORD_VALIDATORS = []
 
 # CSRF Settings
-CSRF_TRUSTED_ORIGINS = [
-    "https://noshade-web.azurewebsites.net"
-]
+CSRF_TRUSTED_ORIGINS = []
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
@@ -115,8 +91,6 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "ToxicityAnalyzer", "static"),
 ]
@@ -124,17 +98,16 @@ STATICFILES_DIRS = [
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Security settings for production
-SECURE_SSL_REDIRECT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# Security settings for development
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_BROWSER_XSS_FILTER = False
+SECURE_CONTENT_TYPE_NOSNIFF = False
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -144,37 +117,8 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-    ) if not DEBUG else (
-        'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-    )
+    ),
+    'ACCESS_TOKEN_LIFETIME':datetime.timedelta(minutes=60),
 }
 
-# Logging Configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
-        }
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': True,
-        },
-    },
-}

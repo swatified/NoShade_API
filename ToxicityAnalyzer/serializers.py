@@ -14,3 +14,12 @@ class RegisterSerializer(serializers.Serializer):
 class LogoutSerializer(serializers.Serializer):
     pass
 
+class CommentAnalysisSerializer(serializers.Serializer):
+    comment = serializers.CharField(required=True)
+    content_id = serializers.CharField(required=True)
+
+    def validate_comment(self, value):
+        if len(value.strip()) == 0:
+            raise serializers.ValidationError("Comment cannot be empty")
+        return value.strip()
+

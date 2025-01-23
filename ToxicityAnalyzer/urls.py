@@ -11,6 +11,7 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('account/delete/', views.AccountDeleteView.as_view(), name='account_delete'),
     path('profile/update/', views.ProfileUpdateView.as_view(), name='profile_update'),
+    path('analytics/', views.AnalyticsView.as_view(), name = "analytics"),
 ]
 
 # API endpoints

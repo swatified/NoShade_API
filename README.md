@@ -101,7 +101,7 @@ Simple greeting "Hey" is classified as neutral sentiment with no toxic labels.
 - Backend:Django
 - Frontend: Django html
 - Model: Multi-label logistic regression with TF-IDF features
-- Sentiment Analysis: RoBERTa-based transformer model
+- Sentiment Analysis: RoBERTa-based hugging face model
 <br/><br/>
 
 ![Screenshot 2025-01-11 134424](https://github.com/user-attachments/assets/950167a3-dcdd-419f-94cc-301be950a1c8)
