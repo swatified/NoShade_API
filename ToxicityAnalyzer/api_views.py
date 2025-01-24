@@ -100,8 +100,9 @@ class ToxicityAnalyzerAPIView(views.APIView):
 
                 # Directly access the fields from the response
                 sentiment = analysis_result['sentiment']
-                toxic_labels = analysis_result['toxic_labels']
-                is_toxic = bool(toxic_labels.strip())
+                toxic_labels = [word for line in analysis_result['toxic_labels'].split('\n') for word in line.split()]
+                print(toxic_labels)
+                is_toxic = bool(analysis_result['toxic_labels'].strip())
 
                 # Create comment with correct field mapping
                 comment = Comment.objects.create(
@@ -120,7 +121,7 @@ class ToxicityAnalyzerAPIView(views.APIView):
                     'content_status': 'created' if created else 'existing',
                     'analysis': {
                         'sentiment': sentiment,  # Direct access
-                        'toxic_labels': toxic_labels.split('\n') if toxic_labels else [],
+                        'toxic_labels': toxic_labels,
                         'is_toxic': is_toxic,
                         'recommendation': 'reject' if is_toxic else 'approve'
                     },

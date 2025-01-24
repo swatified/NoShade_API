@@ -1,8 +1,6 @@
 from django.views.generic import TemplateView
 from .models import Comment, Content
-from django.db.models import Count
 from django.shortcuts import render, redirect
-
 import django.views.generic as generic
 from django.http import JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,13 +10,8 @@ from django.contrib.auth import get_user_model
 from .forms import UserLoginForm, UserRegistrationForm
 from .models import APIKey, Comment, Content
 import json
-from django.db.models import Count, Avg
-from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework.response import Response
-from django.db import models
-from rest_framework import status
 
 
 User = get_user_model()
@@ -209,13 +202,15 @@ class AnalyticsView(TemplateView):
 
         # Get total comments and toxic comments
         total_comments = Comment.objects.filter(
-                    created_at__range=(start_date, end_date)
+                    created_at__range=(start_date, end_date),analyzed_by = (self.request.user)
                 ).count()
 
         toxic_comments = Comment.objects.filter(
                     created_at__range=(start_date, end_date),
-                    is_toxic=True
+                    is_toxic=True, analyzed_by = (self.request.user)
                 ).count()
+        toxic_comments_list = Comment.objects.filter(is_toxic = True, analyzed_by = (self.request.user)).values()
+
 
         # Calculate toxicity rate
         toxicity_rate = round((toxic_comments / total_comments * 100 if total_comments > 0 else 0), 2)
@@ -226,7 +221,8 @@ class AnalyticsView(TemplateView):
         context['content_data'] = {
             'total_comments': total_comments,
             'toxic_comments': toxic_comments,
-            'toxicity_rate': toxicity_rate
+            'toxicity_rate': toxicity_rate,
+            'toxic_comments_list': toxic_comments_list,
         }
 
         return context

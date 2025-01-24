@@ -57,62 +57,22 @@
         <div class="p-4 border-b border-neutral-200/30">
             <h2 class="text-lg font-semibold">Recent Filtered Comments</h2>
         </div>
+        {% for comment in content_data.toxic_comments_list %}
         <div class="p-4 space-y-4">
-            <div class="border border-neutral-200/30 rounded-lg p-4 hover:border-neutral-200/40">
-                <div class="flex justify-between items-start">
-                    <div class="flex items-start space-x-3">
-                        <img src="https://avatar.iran.liara.run/public" alt="User" class="w-10 h-10 rounded-full">
-                        <div>
-                            <h4 class="font-medium">Anonymous User</h4>
-                            <p class="text-sm text-gray-600">2 minutes ago</p>
-                        </div>
-                    </div>
-                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">Severe</span>
+                <div class="border border-neutral-200/30 rounded-lg p-4 hover:border-neutral-200/40">
+                    <div class="flex justify-between items-start">
+                        <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">Severe</span>
                 </div>
-                <p class="mt-3 text-gray-700">This comment was filtered due to toxic content...</p>
-                <div class="mt-3 flex flex-wrap gap-2">
-                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Insult</span>
-                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Threat</span>
-                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Obscene</span>
+                <p class="mt-3 text-gray-700">{{comment.text}}</p>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                    {% for tag in comment.toxic_labels %}
+                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">{{tag}}</span>
+                    {% endfor %}
+                    </div>
                 </div>
             </div>
-
-            <div class="border border-neutral-200/30 rounded-lg p-4 hover:border-neutral-200/40">
-                <div class="flex justify-between items-start">
-                    <div class="flex items-start space-x-3">
-                        <img src="https://avatar.iran.liara.run/public" alt="User" class="w-10 h-10 rounded-full">
-                        <div>
-                            <h4 class="font-medium">Anonymous User</h4>
-                            <p class="text-sm text-gray-600">5 minutes ago</p>
-                        </div>
-                    </div>
-                    <span class="bg-yellow-100 text-yellow-600 text-xs px-2 py-1 rounded-full">Moderate</span>
-                </div>
-                <p class="mt-3 text-gray-700">Another filtered comment example...</p>
-                <div class="mt-3 flex flex-wrap gap-2">
-                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Toxic</span>
-                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Identity Attack</span>
-                </div>
-            </div>
-
-            <div class="border border-neutral-200/30 rounded-lg p-4 hover:border-neutral-200/40">
-                <div class="flex justify-between items-start">
-                    <div class="flex items-start space-x-3">
-                        <img src="https://avatar.iran.liara.run/public" alt="User" class="w-10 h-10 rounded-full">
-                        <div>
-                            <h4 class="font-medium">Anonymous User</h4>
-                            <p class="text-sm text-gray-600">10 minutes ago</p>
-                        </div>
-                    </div>
-                    <span class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full">Low</span>
-                </div>
-                <p class="mt-3 text-gray-700">Third filtered comment example...</p>
-                <div class="mt-3 flex flex-wrap gap-2">
-                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Mild Toxicity</span>
-                </div>
-            </div>
+        {% endfor %}
         </div>
-    </div>
 </section>
 
 
